@@ -39,6 +39,8 @@ const I18N = {
     notification_title: "おくすりの時間です",
     notification_granted: "通知が有効になりました",
     notification_denied: "通知が拒否されました。ブラウザの設定から許可してください。",
+    install_banner_title: "ホーム画面に追加してください",
+    install_banner_text: "ホーム画面に追加すると、通知機能が使えるようになります。<br>Safari: 共有ボタン → 「ホーム画面に追加」<br>Chrome: メニュー → 「ホーム画面に追加」",
   },
   en: {
     app_name: "Med Reminder",
@@ -74,6 +76,8 @@ const I18N = {
     notification_title: "Time to take your medication",
     notification_granted: "Notifications enabled",
     notification_denied: "Notifications denied. Please enable them in browser settings.",
+    install_banner_title: "Add to Home Screen",
+    install_banner_text: "Add to home screen to enable notifications.<br>Safari: Share → Add to Home Screen<br>Chrome: Menu → Add to Home Screen",
   }
 };
 
@@ -449,6 +453,32 @@ if ("serviceWorker" in navigator) {
   navigator.serviceWorker.register("sw.js").catch(() => {});
 }
 
+// --- Install Banner ---
+function showInstallBanner() {
+  const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
+  const isAndroid = /Android/.test(navigator.userAgent);
+  const isStandalone = window.matchMedia('(display-mode: standalone)').matches
+                       || window.navigator.standalone === true;
+  const dismissed = localStorage.getItem('install_banner_dismissed');
+
+  if ((isIOS || isAndroid) && !isStandalone && !dismissed) {
+    const banner = document.getElementById('install-banner');
+    if (banner) {
+      banner.style.display = 'block';
+      const titleEl = document.getElementById('install-banner-title');
+      const textEl = document.getElementById('install-banner-text');
+      if (titleEl) titleEl.textContent = t('install_banner_title');
+      if (textEl) textEl.innerHTML = t('install_banner_text');
+    }
+  }
+}
+
+function dismissInstallBanner() {
+  const banner = document.getElementById('install-banner');
+  if (banner) banner.style.display = 'none';
+  localStorage.setItem('install_banner_dismissed', 'true');
+}
+
 // --- Init ---
 initHistory();
 
@@ -472,4 +502,6 @@ document.addEventListener("DOMContentLoaded", () => {
 
   // Re-schedule every minute
   setInterval(scheduleNotifications, 60000);
+
+  showInstallBanner();
 });
