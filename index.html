@@ -7,6 +7,47 @@
   <link rel="stylesheet" href="style.css">
   <link rel="manifest" href="manifest.json">
   <meta name="theme-color" content="#4A90D9">
+  <style>
+    /* Large Take Button */
+    .btn-take-large {
+      display: block;
+      width: 100%;
+      padding: 18px 24px;
+      font-size: 1.3rem;
+      font-weight: bold;
+      color: #fff;
+      background: #4CAF50;
+      border: none;
+      border-radius: 12px;
+      cursor: pointer;
+      margin-top: 8px;
+      transition: background 0.2s;
+    }
+    .btn-take-large:hover {
+      background: #388E3C;
+    }
+    .btn-take-large:active {
+      background: #2E7D32;
+      transform: scale(0.98);
+    }
+    /* Overdue Banner */
+    #overdue-banner {
+      display: none;
+      background: #F44336;
+      color: #fff;
+      text-align: center;
+      padding: 12px 16px;
+      font-weight: bold;
+      font-size: 1rem;
+      border-radius: 0 0 8px 8px;
+      margin: 0 0 8px 0;
+      animation: overdue-pulse 2s ease-in-out infinite;
+    }
+    @keyframes overdue-pulse {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.8; }
+    }
+  </style>
 </head>
 <body>
   <div id="install-banner" style="display:none; background:#E3F2FD; border:1px solid #90CAF9; border-radius:8px; padding:16px; margin:16px; text-align:center;">
@@ -18,6 +59,9 @@
     </p>
     <button onclick="dismissInstallBanner()" style="background:#4A90D9; color:white; border:none; padding:8px 24px; border-radius:4px; cursor:pointer;">OK</button>
   </div>
+
+  <!-- Overdue Banner -->
+  <div id="overdue-banner" data-i18n="overdue_banner">まだ飲んでいない薬があります！</div>
 
   <!-- Header -->
   <header class="kf-header">
@@ -56,6 +100,8 @@
       <input type="text" id="input-med-name" data-i18n-placeholder="med_name_placeholder" placeholder="例: アムロジピン">
       <label data-i18n="med_dose_label">用量（任意）</label>
       <input type="text" id="input-med-dose" data-i18n-placeholder="med_dose_placeholder" placeholder="例: 5mg 1錠">
+      <label data-i18n="total_pills_label">総錠数（任意）</label>
+      <input type="number" id="input-total-pills" min="1" data-i18n-placeholder="total_pills_placeholder" placeholder="例: 30">
       <label data-i18n="med_times_label">服薬タイミング</label>
       <div class="checkbox-group">
         <label><input type="checkbox" value="morning"> <span data-i18n="morning">朝</span></label>

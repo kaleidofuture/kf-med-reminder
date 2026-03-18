@@ -41,6 +41,11 @@ const I18N = {
     notification_denied: "通知が拒否されました。ブラウザの設定から許可してください。",
     install_banner_title: "ホーム画面に追加してください",
     install_banner_text: "ホーム画面に追加すると、通知機能が使えるようになります。<br>Safari: 共有ボタン → 「ホーム画面に追加」<br>Chrome: メニュー → 「ホーム画面に追加」",
+    total_pills_label: "総錠数（任意）",
+    total_pills_placeholder: "例: 30",
+    remaining_pills: "残り",
+    pills_unit: "錠",
+    overdue_banner: "まだ飲んでいない薬があります！",
   },
   en: {
     app_name: "Med Reminder",
@@ -78,6 +83,11 @@ const I18N = {
     notification_denied: "Notifications denied. Please enable them in browser settings.",
     install_banner_title: "Add to Home Screen",
     install_banner_text: "Add to home screen to enable notifications.<br>Safari: Share → Add to Home Screen<br>Chrome: Menu → Add to Home Screen",
+    total_pills_label: "Total Pills (optional)",
+    total_pills_placeholder: "e.g. 30",
+    remaining_pills: "Remaining",
+    pills_unit: "pills",
+    overdue_banner: "You have medications that haven't been taken yet!",
   }
 };
 
@@ -134,6 +144,7 @@ function todayStr() {
 function addMed() {
   const name = document.getElementById("input-med-name").value.trim();
   const dose = document.getElementById("input-med-dose").value.trim();
+  const totalPillsStr = document.getElementById("input-total-pills").value.trim();
   if (!name) return;
 
   const checkboxes = document.querySelectorAll(".checkbox-group input:checked");
@@ -147,18 +158,23 @@ function addMed() {
   });
   saveTimes(notifyTimes);
 
+  const totalPills = totalPillsStr ? parseInt(totalPillsStr, 10) : null;
+
   const meds = loadMeds();
   meds.push({
     id: Date.now().toString(36) + Math.random().toString(36).slice(2, 6),
     name,
     dose,
     times,
+    totalPills: (totalPills && totalPills > 0) ? totalPills : null,
+    remainingPills: (totalPills && totalPills > 0) ? totalPills : null,
     createdAt: todayStr(),
   });
   saveMeds(meds);
 
   document.getElementById("input-med-name").value = "";
   document.getElementById("input-med-dose").value = "";
+  document.getElementById("input-total-pills").value = "";
   document.querySelectorAll(".checkbox-group input").forEach(cb => cb.checked = false);
 
   renderMedList();
@@ -182,17 +198,69 @@ function renderMedList() {
     return;
   }
   const slotNames = { morning: t("morning"), noon: t("noon"), evening: t("evening"), bedtime: t("bedtime") };
-  list.innerHTML = meds.map(m => `
+  list.innerHTML = meds.map(m => {
+    const pillsInfo = m.remainingPills !== null
+      ? ` | ${t("remaining_pills")}: ${m.remainingPills}${t("pills_unit")}`
+      : "";
+    return `
     <div class="card-item">
       <div class="card-item-text">
         <div class="card-item-front">${escHtml(m.name)}</div>
-        <div class="card-item-back">${escHtml(m.dose || "")} — ${m.times.map(t => slotNames[t] || t).join(", ")}</div>
+        <div class="card-item-back">${escHtml(m.dose || "")} — ${m.times.map(t => slotNames[t] || t).join(", ")}${pillsInfo}</div>
       </div>
       <div class="card-item-actions">
         <button class="btn btn-sm btn-danger-outline" onclick="deleteMed('${m.id}')">&times;</button>
       </div>
     </div>
-  `).join("");
+  `;
+  }).join("");
+}
+
+// --- Overdue Banner ---
+function checkOverdueMeds() {
+  const bannerEl = document.getElementById("overdue-banner");
+  if (!bannerEl) return;
+
+  const meds = loadMeds();
+  if (meds.length === 0) {
+    bannerEl.style.display = "none";
+    return;
+  }
+
+  const today = todayStr();
+  const log = loadLog();
+  const todayLog = log.filter(l => l.date === today);
+  const notifyTimes = loadTimes();
+  const now = new Date();
+  const currentMinutes = now.getHours() * 60 + now.getMinutes();
+
+  const slots = ["morning", "noon", "evening", "bedtime"];
+  let hasOverdue = false;
+
+  for (const slot of slots) {
+    const timeStr = notifyTimes[slot];
+    if (!timeStr) continue;
+    const [h, m] = timeStr.split(":").map(Number);
+    const slotMinutes = h * 60 + m;
+
+    // Only check if current time is past the notification time
+    if (currentMinutes < slotMinutes) continue;
+
+    const slotMeds = meds.filter(med => med.times.includes(slot));
+    for (const med of slotMeds) {
+      const isTaken = todayLog.some(l => l.medId === med.id && l.slot === slot);
+      if (!isTaken) {
+        hasOverdue = true;
+        break;
+      }
+    }
+    if (hasOverdue) break;
+  }
+
+  bannerEl.style.display = hasOverdue ? "block" : "none";
+  if (hasOverdue) {
+    bannerEl.textContent = t("overdue_banner");
+  }
 }
 
 // --- Today's View ---
@@ -204,6 +272,7 @@ function renderToday() {
   if (meds.length === 0) {
     container.innerHTML = "";
     noMeds.style.display = "";
+    checkOverdueMeds();
     return;
   }
   noMeds.style.display = "none";
@@ -224,20 +293,25 @@ function renderToday() {
       <div class="today-slot-title">${slotNames[slot]}（${notifyTimes[slot] || ""}）</div>`;
     for (const m of slotMeds) {
       const isTaken = todayLog.some(l => l.medId === m.id && l.slot === slot);
+      const pillsInfo = m.remainingPills !== null
+        ? `<div class="med-row-pills" style="font-size:0.8rem; color:#888;">${t("remaining_pills")}: ${m.remainingPills}${t("pills_unit")}</div>`
+        : "";
       html += `<div class="med-row ${isTaken ? "taken" : ""}">
         <div class="med-row-info">
           <div class="med-row-name">${escHtml(m.name)}</div>
           ${m.dose ? `<div class="med-row-dose">${escHtml(m.dose)}</div>` : ""}
+          ${pillsInfo}
         </div>
         ${isTaken
           ? `<span class="taken-label">${t("taken_label")}</span>`
-          : `<button class="btn btn-sm btn-success" onclick="takeMed('${m.id}','${slot}')">${t("take_btn")}</button>`
+          : `<button class="btn btn-take-large" onclick="takeMed('${m.id}','${slot}')">${t("take_btn")}</button>`
         }
       </div>`;
     }
     html += `</div>`;
   }
   container.innerHTML = html;
+  checkOverdueMeds();
 }
 
 function takeMed(medId, slot) {
@@ -249,6 +323,15 @@ function takeMed(medId, slot) {
     time: new Date().toTimeString().slice(0, 5),
   });
   saveLog(log);
+
+  // Decrement remaining pills
+  const meds = loadMeds();
+  const med = meds.find(m => m.id === medId);
+  if (med && med.remainingPills !== null && med.remainingPills > 0) {
+    med.remainingPills--;
+    saveMeds(meds);
+  }
+
   renderToday();
 }
 
@@ -500,8 +583,11 @@ document.addEventListener("DOMContentLoaded", () => {
   requestNotificationPermission();
   scheduleNotifications();
 
-  // Re-schedule every minute
-  setInterval(scheduleNotifications, 60000);
+  // Re-schedule every minute and check overdue
+  setInterval(() => {
+    scheduleNotifications();
+    checkOverdueMeds();
+  }, 60000);
 
   showInstallBanner();
 });
