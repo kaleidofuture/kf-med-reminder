@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>KF-MedReminder</title>
+  <link rel="stylesheet" href="style.css">
+  <link rel="manifest" href="manifest.json">
+  <meta name="theme-color" content="#4A90D9">
+</head>
+<body>
+  <!-- Header -->
+  <header class="kf-header">
+    <div class="kf-header-left">
+      <span class="kf-logo">KF</span>
+      <span class="kf-app-name" data-i18n="app_name">おくすりリマインダー</span>
+    </div>
+    <select id="lang-select" onchange="setLang(this.value)">
+      <option value="ja">日本語</option>
+      <option value="en">English</option>
+    </select>
+  </header>
+  <p class="kf-tagline" data-i18n="app_tagline">親の薬管理をサポートする服薬リマインダー</p>
+  <hr class="kf-divider">
+
+  <!-- Navigation Tabs -->
+  <nav class="tabs">
+    <button class="tab active" data-tab="today" data-i18n="tab_today" onclick="showTab('today')">今日の服薬</button>
+    <button class="tab" data-tab="meds" data-i18n="tab_meds" onclick="showTab('meds')">薬の管理</button>
+    <button class="tab" data-tab="history" data-i18n="tab_history" onclick="showTab('history')">履歴</button>
+  </nav>
+
+  <!-- Today Tab -->
+  <main id="tab-today" class="tab-content active">
+    <div id="today-list"></div>
+    <div id="no-meds-today" class="empty-state" style="display:none;">
+      <p data-i18n="no_meds_today">薬が登録されていません。「薬の管理」タブから追加してください。</p>
+    </div>
+  </main>
+
+  <!-- Meds Management Tab -->
+  <main id="tab-meds" class="tab-content">
+    <div class="card-form">
+      <h3 data-i18n="add_med">薬を登録</h3>
+      <label data-i18n="med_name_label">薬の名前</label>
+      <input type="text" id="input-med-name" data-i18n-placeholder="med_name_placeholder" placeholder="例: アムロジピン">
+      <label data-i18n="med_dose_label">用量（任意）</label>
+      <input type="text" id="input-med-dose" data-i18n-placeholder="med_dose_placeholder" placeholder="例: 5mg 1錠">
+      <label data-i18n="med_times_label">服薬タイミング</label>
+      <div class="checkbox-group">
+        <label><input type="checkbox" value="morning"> <span data-i18n="morning">朝</span></label>
+        <label><input type="checkbox" value="noon"> <span data-i18n="noon">昼</span></label>
+        <label><input type="checkbox" value="evening"> <span data-i18n="evening">夕</span></label>
+        <label><input type="checkbox" value="bedtime"> <span data-i18n="bedtime">就寝前</span></label>
+      </div>
+      <label data-i18n="notify_times_label">通知時刻</label>
+      <div class="time-inputs">
+        <div class="time-row"><span data-i18n="morning">朝</span> <input type="time" id="time-morning" value="07:00"></div>
+        <div class="time-row"><span data-i18n="noon">昼</span> <input type="time" id="time-noon" value="12:00"></div>
+        <div class="time-row"><span data-i18n="evening">夕</span> <input type="time" id="time-evening" value="18:00"></div>
+        <div class="time-row"><span data-i18n="bedtime">就寝前</span> <input type="time" id="time-bedtime" value="21:00"></div>
+      </div>
+      <button class="btn btn-primary" onclick="addMed()" data-i18n="add_btn">登録</button>
+    </div>
+    <h3 data-i18n="med_list">登録済みの薬</h3>
+    <div id="med-list" class="card-list"></div>
+  </main>
+
+  <!-- History Tab -->
+  <main id="tab-history" class="tab-content">
+    <div class="history-controls">
+      <button class="btn btn-outline" onclick="prevMonth()">&lt;</button>
+      <span id="history-month" class="history-month-label"></span>
+      <button class="btn btn-outline" onclick="nextMonth()">&gt;</button>
+    </div>
+    <div id="monthly-summary" class="monthly-summary"></div>
+    <div id="history-list" class="history-list"></div>
+    <div class="io-section" style="margin-top:16px;">
+      <button class="btn btn-primary" onclick="exportCSV()" data-i18n="export_csv">CSVエクスポート</button>
+    </div>
+  </main>
+
+  <!-- Footer -->
+  <footer class="kf-footer">
+    <div class="footer-links">
+      <details>
+        <summary data-i18n="about_title">このアプリについて</summary>
+        <p data-i18n="about_description">親や家族の薬管理が心配な方のための服薬リマインダーアプリです。ブラウザ通知で服薬を知らせ、履歴を記録します。</p>
+      </details>
+      <details>
+        <summary data-i18n="tech_title">使用技術</summary>
+        <p>HTML + CSS + JavaScript (PWA) / Notification API / Service Worker / LocalStorage</p>
+      </details>
+      <a href="https://kaleidofuture.com" target="_blank" rel="noopener">KaleidoFuture</a>
+    </div>
+    <div class="footer-copy">KaleidoFuture — Built with AI-driven development, powered by existing libraries</div>
+  </footer>
+
+  <script src="app.js"></script>
+</body>
+</html>
