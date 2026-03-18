@@ -9,6 +9,16 @@
   <meta name="theme-color" content="#4A90D9">
 </head>
 <body>
+  <div id="install-banner" style="display:none; background:#E3F2FD; border:1px solid #90CAF9; border-radius:8px; padding:16px; margin:16px; text-align:center;">
+    <p style="margin:0 0 8px 0; font-weight:bold;" id="install-banner-title">ホーム画面に追加</p>
+    <p style="margin:0 0 12px 0; font-size:0.9rem; color:#666;" id="install-banner-text">
+      ホーム画面に追加すると、通知機能が使えるようになります。<br>
+      Safari: 共有ボタン → 「ホーム画面に追加」<br>
+      Chrome: メニュー → 「ホーム画面に追加」
+    </p>
+    <button onclick="dismissInstallBanner()" style="background:#4A90D9; color:white; border:none; padding:8px 24px; border-radius:4px; cursor:pointer;">OK</button>
+  </div>
+
   <!-- Header -->
   <header class="kf-header">
     <div class="kf-header-left">
